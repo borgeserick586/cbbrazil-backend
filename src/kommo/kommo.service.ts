@@ -96,9 +96,16 @@ export class KommoService {
       const payload: KommoLeadPayload[] = [
         {
           name: `Lead - ${leadData.name}`,
-          price: 5000,
-          contacts_id: [contactId],
+          price: 0,
+          _embedded: {
+            contacts: [
+              {
+                id: contactId,
+              },
+            ],
+          },
           custom_fields_values: [
+            // UTM Tracking Fields
             {
               field_id: 531872, // utm_source
               values: [{ value: leadData.utm_source || 'landing_page' }],

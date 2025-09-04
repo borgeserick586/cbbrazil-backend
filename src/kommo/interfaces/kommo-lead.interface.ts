@@ -1,7 +1,11 @@
 export interface KommoLeadPayload {
   name: string;
   price: number;
-  contacts_id: number[];
+  _embedded: {
+    contacts: Array<{
+      id: number;
+    }>;
+  };
   custom_fields_values: Array<{
     field_id: number;
     values: Array<{

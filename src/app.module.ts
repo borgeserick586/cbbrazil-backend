@@ -3,7 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { ContactsModule } from './contacts/contacts.module';
 import { LeadsModule } from './leads/leads.module';
-import { KommoModule } from './kommo/kommo.mudule';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { KommoModule } from './kommo/kommo.module';
 import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
@@ -18,5 +20,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     ContactsModule,
     LeadsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

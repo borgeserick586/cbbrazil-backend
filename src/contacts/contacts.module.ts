@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ContactsController } from './contacts.controller';
 import { ContactsService } from './contacts.service';
 import { SupabaseModule } from '../supabase/supabase.module';
-import { KommoModule } from '../kommo/kommo.mudule';
+import { KommoModule } from '../kommo/kommo.module';
 
 @Module({
   imports: [SupabaseModule, KommoModule],
