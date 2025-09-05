@@ -23,7 +23,7 @@ export class ContactsService {
 
       // 2. Criar contato no Kommo
       const kommoContactId =
-        await this.kommoService.createContact(createContactDto);
+        await this.kommoService.createOrFindContact(createContactDto);
 
       return {
         supabase: supabaseContact,
