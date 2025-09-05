@@ -24,10 +24,21 @@ async function bootstrap() {
   // Prefixo global para API
   app.setGlobalPrefix('api/v1');
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3000;
   await app.listen(port);
 
+  const environment = process.env.NODE_ENV || 'development';
+  const baseUrl =
+    environment === 'production'
+      ? `https://cbbrazil.com/api/v1`
+      : `http://localhost:${port}/api/v1`;
+
   console.log(`🚀 Backend rodando na porta ${port}`);
-  console.log(`📡 API disponível em: http://localhost:${port}/api/v1`);
+  console.log(`🌍 Ambiente: ${environment}`);
+  console.log(`📡 API disponível em: ${baseUrl}`);
+
+  if (environment === 'production') {
+    console.log(`✅ Configurado para produção: cbbrazil.com/api`);
+  }
 }
 bootstrap();
