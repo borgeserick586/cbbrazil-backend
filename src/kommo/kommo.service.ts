@@ -32,7 +32,73 @@ export class KommoService {
     };
   }
 
-  async createContact(contactData: any): Promise<number> {
+  /**
+   * Procura por um contato existente no Kommo usando e-mail ou telefone.
+   * @param query - O e-mail ou telefone a ser pesquisado.
+   * @returns O ID do contato se encontrado, caso contrário, null.
+   */
+  private async findContactByQuery(query: string): Promise<number | null> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<KommoContactResponse>(
+          `${this.apiUrl}/api/v4/contacts`,
+          {
+            headers: this.getHeaders(),
+            params: { query },
+          },
+        ),
+      );
+      // Retorna o ID do primeiro contato encontrado
+      return response.data._embedded?.contacts?.[0]?.id || null;
+    } catch (error) {
+      // Se a busca falhar (ex: 404 - Not Found), consideramos que não encontrou.
+      if (error.response?.status === 404) {
+        return null;
+      }
+      console.error(
+        'Erro ao buscar contato no Kommo:',
+        error.response?.data || error.message,
+      );
+      throw new HttpException(
+        'Failed to search for contact in Kommo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Cria um novo contato no Kommo, mas primeiro verifica se já existe.
+   * @param contactData - Dados do contato (nome, e-mail, telefone).
+   * @returns O ID do contato (novo ou existente).
+   */
+  async createOrFindContact(contactData: any): Promise<number> {
+    // Tenta encontrar pelo e-mail primeiro, se disponível
+    if (contactData.email) {
+      const existingContactId = await this.findContactByQuery(
+        contactData.email,
+      );
+      if (existingContactId) {
+        console.log(
+          `Contato existente encontrado pelo e-mail: ${existingContactId}`,
+        );
+        return existingContactId;
+      }
+    }
+    // Se não encontrou pelo e-mail, tenta pelo telefone
+    if (contactData.phone) {
+      const phoneWithCountryCode = `+55${contactData.phone}`;
+      const existingContactId =
+        await this.findContactByQuery(phoneWithCountryCode);
+      if (existingContactId) {
+        console.log(
+          `Contato existente encontrado pelo telefone: ${existingContactId}`,
+        );
+        return existingContactId;
+      }
+    }
+
+    // Se não encontrou, cria um novo contato
+    console.log('Nenhum contato existente encontrado. Criando um novo.');
     try {
       const payload: KommoContactPayload[] = [
         {
@@ -42,21 +108,11 @@ export class KommoService {
           custom_fields_values: [
             {
               field_id: 531860, // Email field
-              values: [
-                {
-                  value: contactData.email,
-                  enum_code: 'WORK',
-                },
-              ],
+              values: [{ value: contactData.email, enum_code: 'WORK' }],
             },
             {
               field_id: 531858, // Phone field
-              values: [
-                {
-                  value: `+55${contactData.phone}`,
-                  enum_code: 'WORK',
-                },
-              ],
+              values: [{ value: `+55${contactData.phone}`, enum_code: 'WORK' }],
             },
           ],
         },
@@ -77,11 +133,10 @@ export class KommoService {
           HttpStatus.BAD_REQUEST,
         );
       }
-
       return contactId;
     } catch (error) {
       console.error(
-        'Erro ao criar contato no Kommo:',
+        'Erro ao criar novo contato no Kommo:',
         error.response?.data || error.message,
       );
       throw new HttpException(
@@ -91,37 +146,38 @@ export class KommoService {
     }
   }
 
-  async createLead(leadData: any, contactId: number): Promise<any> {
+  /**
+   * Cria um novo lead e o associa a um contato.
+   * @param leadData - Dados do lead.
+   * @param contactId - ID do contato a ser vinculado.
+   * @returns O ID do lead criado.
+   */
+  async createLead(
+    leadData: any,
+    contactId: number,
+  ): Promise<{ leadId: number }> {
     try {
       const payload: KommoLeadPayload[] = [
         {
           name: `Lead - ${leadData.name}`,
-          price: 0,
+          price: 5000,
           _embedded: {
-            contacts: [
-              {
-                id: contactId,
-              },
-            ],
+            contacts: [{ id: contactId }],
           },
           custom_fields_values: [
-            // UTM Tracking Fields
             {
-              field_id: 531872, // utm_source
+              field_id: 531872,
               values: [{ value: leadData.utm_source || 'landing_page' }],
             },
             {
-              field_id: 531868, // utm_medium
+              field_id: 531868,
               values: [{ value: leadData.utm_medium || 'website' }],
             },
             {
-              field_id: 531870, // utm_campaign
+              field_id: 531870,
               values: [{ value: leadData.utm_campaign || 'gdf_nova_vision' }],
             },
-            {
-              field_id: 789656, // Origem
-              values: [{ enum_id: 656334 }], // "GOOGLE"
-            },
+            { field_id: 789656, values: [{ enum_id: 656334 }] },
           ],
           tags: [
             { name: 'google' },
@@ -139,7 +195,16 @@ export class KommoService {
         ),
       );
 
-      return response.data;
+      const leadId = response.data._embedded?.leads?.[0]?.id;
+      if (!leadId) {
+        throw new HttpException(
+          'Lead ID not returned by Kommo',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Retorna um objeto com o leadId para facilitar o uso
+      return { leadId };
     } catch (error) {
       console.error(
         'Erro ao criar lead no Kommo:',

@@ -19,6 +19,8 @@ export class LeadsController {
       return {
         success: true,
         message: 'Lead created successfully',
+        leadId: result.leadId,
+        contactId: result.contactId,
         data: result,
       };
     } catch (error) {

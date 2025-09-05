@@ -48,12 +48,14 @@ export class LeadsService {
         kommoContactId,
       );
 
+      const supabaseLeadId = supabaseLead.id;
+      const kommoLeadId = kommoLead.leadId;
+
       return {
-        contact: contactResult,
-        lead: {
-          supabase: supabaseLead,
-          kommo: kommoLead,
-        },
+        contactId: kommoContactId,
+        leadId: kommoLeadId,
+        supabaseContact: contactResult.supabase,
+        supabaseLead,
       };
     } catch (error) {
       console.error('Erro ao criar lead:', error);
