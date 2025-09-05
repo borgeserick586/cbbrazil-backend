@@ -67,6 +67,41 @@ export class KommoService {
   }
 
   /**
+   * Busca um contato existente no Kommo por telefone ou email.
+   * @param phone - Número de telefone (opcional).
+   * @param email - Email (opcional).
+   * @returns O contato encontrado com ID, caso contrário null.
+   */
+  async findContactByPhoneOrEmail(
+    phone?: string,
+    email?: string,
+  ): Promise<{ id: string } | null> {
+    try {
+      // Tenta encontrar pelo e-mail primeiro, se disponível
+      if (email) {
+        const contactId = await this.findContactByQuery(email);
+        if (contactId) {
+          return { id: contactId.toString() };
+        }
+      }
+
+      // Se não encontrou pelo e-mail, tenta pelo telefone
+      if (phone) {
+        const phoneWithCountryCode = `+55${phone}`;
+        const contactId = await this.findContactByQuery(phoneWithCountryCode);
+        if (contactId) {
+          return { id: contactId.toString() };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar contato no Kommo:', error);
+      return null;
+    }
+  }
+
+  /**
    * Cria um novo contato no Kommo, mas primeiro verifica se já existe.
    * @param contactData - Dados do contato (nome, e-mail, telefone).
    * @returns O ID do contato (novo ou existente).
@@ -160,7 +195,7 @@ export class KommoService {
       const payload: KommoLeadPayload[] = [
         {
           name: `Lead - ${leadData.name}`,
-          price: 5000,
+          price: 0,
           _embedded: {
             contacts: [{ id: contactId }],
           },
