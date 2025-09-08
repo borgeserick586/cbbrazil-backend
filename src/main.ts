@@ -44,14 +44,14 @@ async function bootstrap() {
 
   const baseUrl =
     env === 'production'
-      ? 'https://cbbrazil.com/api/v1'
+      ? 'https://cdbrazilbackend-production-3ed4.up.railway.app/api/v1'
       : `http://localhost:${port}/api/v1`;
 
   console.log(`🚀 Backend rodando na porta ${port}`);
   console.log(`🌍 Ambiente: ${env}`);
   console.log(`📡 API disponível em: ${baseUrl}`);
   if (env === 'production') {
-    console.log(`✅ Configurado para produção: cbbrazil.com/api/v1`);
+    console.log(`✅ Configurado para produção: ${baseUrl}`);
   }
 }
 
