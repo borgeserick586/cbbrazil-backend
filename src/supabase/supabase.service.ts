@@ -18,6 +18,27 @@ export class SupabaseService {
     return this.supabase;
   }
 
+  async findContactByPhoneOrEmail(phone: string, email?: string) {
+    let query = this.supabase.from('contacts').select('*');
+
+    if (email && email.trim()) {
+      // Se tem email, busca por telefone OU email
+      query = query.or(`phone.eq.${phone},email.eq.${email}`);
+    } else {
+      // Se não tem email, busca só por telefone
+      query = query.eq('phone', phone);
+    }
+
+    const { data, error } = await query.single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = not found
+      throw error;
+    }
+
+    return data; // retorna null se não encontrar
+  }
+
   async createContact(contactData: any) {
     const { data, error } = await this.supabase
       .from('contacts')

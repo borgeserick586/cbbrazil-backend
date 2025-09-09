@@ -2,17 +2,29 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
+function normalizeOrigin(value?: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.origin; // remove /gdf se vier no env
+  } catch {
+    return value;
+  }
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configurar CORS
+  // CORS - permitir tanto a origem base quanto subpaths
+  const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:8080';
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: [frontendOrigin, `${frontendOrigin}/gdf`],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     credentials: true,
   });
 
-  // Pipe de validação global
+  // Validação global
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -21,24 +33,26 @@ async function bootstrap() {
     }),
   );
 
-  // Prefixo global para API
+  // Prefixo global
   app.setGlobalPrefix('api/v1');
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
+  const port = Number(process.env.PORT) || 3000;
+  const env = process.env.NODE_ENV || 'development';
 
-  const environment = process.env.NODE_ENV || 'development';
+  // Escutar no 0.0.0.0 (importante em hospedagem)
+  await app.listen(port, '0.0.0.0');
+
   const baseUrl =
-    environment === 'production'
-      ? `https://cbbrazil.com/api/v1`
+    env === 'production'
+      ? 'https://cdbrazilbackend-production-3ed4.up.railway.app/api/v1'
       : `http://localhost:${port}/api/v1`;
 
   console.log(`🚀 Backend rodando na porta ${port}`);
-  console.log(`🌍 Ambiente: ${environment}`);
+  console.log(`🌍 Ambiente: ${env}`);
   console.log(`📡 API disponível em: ${baseUrl}`);
-
-  if (environment === 'production') {
-    console.log(`✅ Configurado para produção: cbbrazil.com/api`);
+  if (env === 'production') {
+    console.log(`✅ Configurado para produção: ${baseUrl}`);
   }
 }
+
 bootstrap();

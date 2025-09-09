@@ -21,43 +21,52 @@ O projeto segue a arquitetura modular do NestJS, organizando funcionalidades em 
 ├── 📁 src/                          # Código fonte principal
 │   ├── 📁 contacts/                 # Módulo de Contatos
 │   │   ├── 📁 dto/                 # Data Transfer Objects
-│   │   │   └── 📄 create-contact.dto.ts  # DTO para criação de contatos
-│   │   ├── 📄 contacts.controller.ts     # Controller REST para contatos
-│   │   ├── 📄 contacts.module.ts         # Módulo de contatos
-│   │   └── 📄 contacts.service.ts        # Lógica de negócio dos contatos
+│   │   │   └── 📄 create-contact.dto.ts  # Define o formato e validação dos dados para criar contatos
+│   │   ├── 📄 contacts.controller.ts     # Define as rotas e endpoints REST para contatos
+│   │   ├── 📄 contacts.module.ts         # Declara o módulo de contatos e suas dependências
+│   │   └── 📄 contacts.service.ts        # Implementa a lógica de negócio para contatos e sincronização
 │   │
 │   ├── 📁 leads/                    # Módulo de Leads
 │   │   ├── 📁 dto/                 # Data Transfer Objects
-│   │   │   └── 📄 create-lead.dto.ts     # DTO para criação de leads
-│   │   ├── 📄 leads.controller.ts        # Controller REST para leads
-│   │   ├── 📄 leads.module.ts            # Módulo de leads
-│   │   └── 📄 leads.service.ts           # Lógica de negócio dos leads
+│   │   │   └── 📄 create-lead.dto.ts     # Define o formato e validação dos dados para criar leads
+│   │   ├── 📄 leads.controller.ts        # Define as rotas e endpoints REST para leads
+│   │   ├── 📄 leads.module.ts            # Declara o módulo de leads e suas dependências
+│   │   └── 📄 leads.service.ts           # Implementa a lógica de negócio para leads e criação automática de contatos
 │   │
 │   ├── 📁 supabase/                 # Módulo de Integração Supabase
-│   │   ├── 📄 supabase.module.ts         # Configuração do módulo Supabase
-│   │   └── 📄 supabase.service.ts        # Serviço para operações no Supabase
+│   │   ├── 📄 supabase.module.ts         # Configura o módulo e a conexão com o Supabase
+│   │   └── 📄 supabase.service.ts        # Implementa operações CRUD no banco Supabase
 │   │
 │   ├── 📁 kommo/                    # Módulo de Integração Kommo CRM
-│   │   ├── 📁 interfaces/           # Interfaces TypeScript
-│   │   │   ├── 📄 kommo-contact.interface.ts  # Interface para contatos Kommo
-│   │   │   └── 📄 kommo-lead.interface.ts     # Interface para leads Kommo
-│   │   ├── 📄 kommo.module.ts            # Configuração do módulo Kommo
-│   │   └── 📄 kommo.service.ts            # Serviço para operações no Kommo
+│   │   ├── 📁 interfaces/           # Interfaces TypeScript para o Kommo
+│   │   │   ├── 📄 kommo-contact.interface.ts  # Define a estrutura dos dados de contato do Kommo
+│   │   │   └── 📄 kommo-lead.interface.ts     # Define a estrutura dos dados de lead do Kommo
+│   │   ├── 📄 kommo.module.ts            # Configura o módulo Kommo
+│   │   ├── 📄 kommo.mudule.ts            # (Possível duplicata/erro de digitação do arquivo acima)
+│   │   └── 📄 kommo.service.ts           # Implementa integração e sincronização com o Kommo CRM
+│   │   └── 📄 field-mappings.md          # Documentação sobre mapeamento de campos Kommo
 │   │
-│   ├── 📄 app.controller.ts         # Controller principal (health check)
-│   ├── 📄 app.module.ts             # Módulo raiz da aplicação
-│   ├── 📄 app.service.ts            # Serviço principal
-│   └── 📄 main.ts                   # Ponto de entrada da aplicação
+│   ├── 📄 app.controller.ts         # Controller principal, inclui health check da API
+│   ├── 📄 app.module.ts             # Módulo raiz que importa e conecta todos os módulos
+│   ├── 📄 app.service.ts            # Serviço principal, lógica compartilhada da aplicação
+│   └── 📄 main.ts                   # Ponto de entrada da aplicação NestJS
 │
 ├── 📁 test/                         # Testes automatizados
-│   ├── 📄 app.e2e-spec.ts          # Testes end-to-end
-│   └── 📄 jest-e2e.json            # Configuração Jest para E2E
+│   ├── 📄 app.e2e-spec.ts           # Testes end-to-end da aplicação
+│   └── 📄 jest-e2e.json             # Configuração do Jest para testes E2E
 │
 ├── 📁 dist/                         # Código compilado (gerado automaticamente)
 ├── 📁 node_modules/                 # Dependências do projeto
 ├── 🔒 .env                          # Variáveis de ambiente (não versionado)
-├── 📄 package.json                  # Dependências e scripts do projeto
-├── 📄 tsconfig.json                 # Configuração TypeScript
+├── 📄 package.json                  # Lista dependências, scripts e metadados do projeto
+├── 📄 tsconfig.json                 # Configuração global do TypeScript
+├── 📄 tsconfig.build.json           # Configuração TypeScript específica para build
+├── 📄 nest-cli.json                 # Configuração do Nest CLI
+├── 📄 eslint.config.mjs             # Configuração do ESLint
+├── 📄 env.production.example        # Exemplo de variáveis de ambiente para produção
+├── 📄 server.js                     # Script para inicialização do servidor em produção
+├── 📄 DEPLOY_HOSTINGER.md           # Guia de deploy na Hostinger
+├── 📄 dist.zip                      # Build compactado para deploy
 └── 📄 README.md                     # Este arquivo
 ```
 

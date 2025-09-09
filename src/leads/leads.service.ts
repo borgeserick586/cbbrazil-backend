@@ -56,26 +56,32 @@ export class LeadsService {
 
           const elapsed = Date.now() - start;
           console.log(
-            `[LeadsService] Contato não encontrado. Aguardando 10s... (${Math.round(elapsed / 1000)}s/${Math.round(maxWaitMs / 1000)}s)`,
+            `[LeadsService] Contato não encontrado. Aguardando 25s... (${Math.round(elapsed / 1000)}s/${Math.round(maxWaitMs / 1000)}s)`,
           );
           await new Promise((res) => setTimeout(res, intervalMs));
         }
 
         if (kommoContactId) {
           console.log(
-            '[LeadsService] Contato encontrado no Kommo (via WhatsApp). Cadastrando apenas no Supabase...',
+            '[LeadsService] Contato encontrado no Kommo (via WhatsApp). Verificando se já existe no Supabase...',
           );
-          // Já existe no Kommo (provavelmente via WhatsApp), cria só no Supabase
-          const supabaseContact = await this.contactsService.create({
+
+          // ✅ CORREÇÃO: Usa findOrCreate ao invés de create para evitar duplicatas
+          const supabaseContact = await this.contactsService.findOrCreate({
             name: createLeadDto.name,
             phone: createLeadDto.phone,
-            // Email opcional, usa string vazia se não existir
             email: createLeadDto.email || '',
             first_name: createLeadDto.name.split(' ')[0],
             last_name:
               createLeadDto.name.split(' ').slice(1).join(' ') || undefined,
           });
+
           supabaseContactId = supabaseContact.supabase.id;
+
+          console.log(
+            `[LeadsService] ${supabaseContact.isNew ? 'Novo contato criado' : 'Contato existente encontrado'} no Supabase. ID: ${supabaseContactId}`,
+          );
+
           // Cria lead no Supabase
           const supabaseLead = await this.supabaseService.createLead({
             contact_id: supabaseContactId,
@@ -89,12 +95,13 @@ export class LeadsService {
             status: createLeadDto.status || 'new_lead',
             metadata: createLeadDto.custom_fields,
           });
+
           return {
             contactId: kommoContactId,
             leadId: null,
             supabaseContact: supabaseContact.supabase,
             supabaseLead,
-            info: 'Lead já existia no Kommo (WhatsApp), cadastrado apenas no Supabase.',
+            info: `Lead já existia no Kommo (WhatsApp). Contato ${supabaseContact.isNew ? 'criado' : 'encontrado'} no Supabase.`,
           };
         } else {
           console.log(
@@ -107,7 +114,8 @@ export class LeadsService {
       console.log(
         '[LeadsService] Executando fluxo normal: criando contato e lead...',
       );
-      // 1. Criar contato primeiro (fluxo normal)
+
+      // 1. Criar contato primeiro (fluxo normal) - também usa findOrCreate para consistência
       const contactData = {
         name: createLeadDto.name,
         email: createLeadDto.email || '',
@@ -117,9 +125,13 @@ export class LeadsService {
           createLeadDto.name.split(' ').slice(1).join(' ') || undefined,
       };
 
-      contactResult = await this.contactsService.create(contactData);
+      contactResult = await this.contactsService.findOrCreate(contactData);
       supabaseContactId = contactResult.supabase.id;
       kommoContactId = contactResult.kommo.id;
+
+      console.log(
+        `[LeadsService] Contato ${contactResult.isNew ? 'criado' : 'encontrado'}. Supabase ID: ${supabaseContactId}, Kommo ID: ${kommoContactId}`,
+      );
 
       // 2. Criar lead no Supabase
       const supabaseLead = await this.supabaseService.createLead({
@@ -135,21 +147,25 @@ export class LeadsService {
         metadata: createLeadDto.custom_fields,
       });
 
-      // 3. Criar lead no Kommo
-      // Garante que o ID do contato do Kommo é number
-      const kommoContactIdNumber = kommoContactId
-        ? Number(kommoContactId)
-        : undefined;
-      if (!kommoContactIdNumber) {
-        throw new Error('ID do contato do Kommo inválido para criar lead.');
+      // 3. Criar lead no Kommo (só se o contato existir no Kommo)
+      let kommoLead: { leadId: number } | null = null;
+      if (kommoContactId) {
+        const kommoContactIdNumber = Number(kommoContactId);
+        if (!kommoContactIdNumber) {
+          throw new Error('ID do contato do Kommo inválido para criar lead.');
+        }
+        kommoLead = await this.kommoService.createLead(
+          createLeadDto,
+          kommoContactIdNumber,
+        );
+      } else {
+        console.log(
+          '[LeadsService] Contato não existe no Kommo, pulando criação de lead no Kommo.',
+        );
       }
-      const kommoLead = await this.kommoService.createLead(
-        createLeadDto,
-        kommoContactIdNumber,
-      );
 
       const supabaseLeadId = supabaseLead.id;
-      const kommoLeadId = kommoLead.leadId;
+      const kommoLeadId = kommoLead?.leadId || null;
 
       return {
         contactId: kommoContactId,
