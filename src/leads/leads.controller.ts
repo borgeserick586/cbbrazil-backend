@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Query,
+  Get,
 } from '@nestjs/common';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';

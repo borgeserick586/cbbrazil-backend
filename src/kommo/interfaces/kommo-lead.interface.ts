@@ -1,6 +1,8 @@
 export interface KommoLeadPayload {
   name: string;
   price: number;
+  pipeline_id?: number;
+  status_id?: number;
   _embedded: {
     contacts: Array<{
       id: number;
