@@ -27,7 +27,7 @@ export class LeadsService {
         console.log(
           '[LeadsService] Trigger dev ativado! Aguardando até 3 minutos para verificar contato no Kommo...',
         );
-        const maxWaitMs = 1 * 60 * 1000; // 3 minutos 3 * 60 * 1000
+        const maxWaitMs = 3 * 60 * 1000; // 3 minutos 3 * 60 * 1000
         const intervalMs = 25 * 1000; // checa a cada 25s
         const start = Date.now();
         let found = false;
