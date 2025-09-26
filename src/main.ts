@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 function normalizeOrigin(value?: string) {
@@ -45,22 +46,34 @@ async function bootstrap() {
     app.setGlobalPrefix('api/v1');
   }
 
+  // Configuração do Swagger (APÓS o setGlobalPrefix)
+  const config = new DocumentBuilder()
+    .setTitle('CB Brazil Backend API')
+    .setDescription(
+      'API para gerenciamento de contatos e leads com integração ao Supabase e Kommo CRM.',
+    )
+    .setVersion('1.0.0')
+    .addServer('/api/v1') // Informa ao Swagger que os endpoints da API estão sob /api/v1
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  // Monta o Swagger em /docs, fora do prefixo global da API
+  SwaggerModule.setup('docs', app, document);
+
   const port = Number(process.env.PORT) || 3000;
 
   // Escutar no 0.0.0.0 (importante em hospedagem)
   await app.listen(port, '0.0.0.0');
 
-  const baseUrl =
+  const appUrl =
     env === 'production'
-      ? 'https://cdbrazilbackend-production-3ed4.up.railway.app/api/v1'
-      : `http://localhost:${port}/api/v1`;
+      ? 'https://cdbrazilbackend-production-3ed4.up.railway.app'
+      : `http://localhost:${port}`;
 
   console.log(`🚀 Backend rodando na porta ${port}`);
   console.log(`🌍 Ambiente: ${env}`);
-  console.log(`📡 API disponível em: ${baseUrl}`);
-  if (env === 'production') {
-    console.log(`✅ Configurado para produção: ${baseUrl}`);
-  }
+  console.log(`📡 API disponível em: ${appUrl}/api/v1`);
+  console.log(`📚 Documentação (Swagger) em: ${appUrl}/docs`);
 }
 
 bootstrap();

@@ -15,10 +15,8 @@ export class AppController {
     return {
       message: 'CB Brazil Backend API',
       version: '1.0.0',
-      endpoints: {
-        api: '/api/v1',
-        docs: '/api/v1/docs', // se tiver Swagger
-      },
+      status: 'running',
+      docs: '/docs',
     };
   }
 }

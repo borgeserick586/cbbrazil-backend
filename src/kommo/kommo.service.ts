@@ -10,7 +10,6 @@ import {
   KommoLeadPayload,
   KommoLeadResponse,
 } from './interfaces/kommo-lead.interface';
-import { CreateLeadDto } from '../leads/dto/create-lead.dto'; // Importar o DTO
 
 @Injectable()
 export class KommoService {
@@ -32,8 +31,6 @@ export class KommoService {
       Authorization: `Bearer ${this.accessToken}`,
     };
   }
-
-  // ... (as funções findContactByQuery, findContactByPhoneOrEmail, createOrFindContact permanecem as mesmas) ...
 
   /**
    * Procura por um contato existente no Kommo usando e-mail ou telefone.
@@ -184,86 +181,46 @@ export class KommoService {
     }
   }
 
-  // ==================================================================
-  // FUNÇÃO CORRIGIDA ABAIXO
-  // ==================================================================
   /**
    * Cria um novo lead e o associa a um contato.
-   * @param leadData - Dados do lead (do DTO).
+   * @param leadData - Dados do lead.
    * @param contactId - ID do contato a ser vinculado.
    * @returns O ID do lead criado.
    */
   async createLead(
-    leadData: CreateLeadDto,
+    leadData: any,
     contactId: number,
   ): Promise<{ leadId: number }> {
     try {
-      // ⚠️ ATENÇÃO: Verifique se estes IDs correspondem à sua conta Kommo
-      // Apenas IDs verificados e funcionais
-      const fieldIdMap = {
-        utm_source: 531872,
-        utm_medium: 531868,
-        utm_campaign: 531870,
-        // Comentados temporariamente até verificar IDs corretos
-        // utm_content: 111111,
-        // utm_term: 222222,
-        // contrato: 333333,
-        // taxa_servico: 444444,
-        // parcela: 555555,
-        // margem: 666666,
-      };
-
-      // Mapeamento para campos do tipo 'select' ou 'radio' que usam enum_id
-      // Comentados temporariamente até verificar IDs corretos
-      const enumFieldIdMap = {
-        // banco: 777777,
-        // produto: 888888,
-        // prazo: 999999,
-        // associacao: 101010,
-        // regime: 121212,
-      };
-
-      const custom_fields_values: Array<{
-        field_id: number;
-        values: Array<{
-          value?: string;
-          enum_id?: number;
-        }>;
-      }> = [];
-
-      // Mapeia campos de texto
-      for (const key in fieldIdMap) {
-        if (leadData[key] && fieldIdMap[key] > 0) {
-          custom_fields_values.push({
-            field_id: fieldIdMap[key],
-            values: [{ value: String(leadData[key]) }],
-          });
-        }
-      }
-
-      // Mapeia campos de seleção (enum)
-      for (const key in enumFieldIdMap) {
-        if (leadData[key] && enumFieldIdMap[key] > 0) {
-          custom_fields_values.push({
-            field_id: enumFieldIdMap[key],
-            values: [{ enum_id: Number(leadData[key]) }],
-          });
-        }
-      }
-
-      // Monta o payload final - versão testada
-      const leadPayload: KommoLeadPayload = {
-        name: `Lead - ${leadData.name}`,
-        price: 0,
-        pipeline_id: 11609695,
-        _embedded: {
-          contacts: [{ id: contactId }],
+      const payload: KommoLeadPayload[] = [
+        {
+          name: `Lead - ${leadData.name}`,
+          price: 0,
+          _embedded: {
+            contacts: [{ id: contactId }],
+          },
+          custom_fields_values: [
+            {
+              field_id: 531872,
+              values: [{ value: leadData.utm_source || 'landing_page' }],
+            },
+            {
+              field_id: 531868,
+              values: [{ value: leadData.utm_medium || 'website' }],
+            },
+            {
+              field_id: 531870,
+              values: [{ value: leadData.utm_campaign || 'gdf_nova_vision' }],
+            },
+            { field_id: 789656, values: [{ enum_id: 656334 }] },
+          ],
+          tags: [
+            { name: 'google' },
+            { name: 'Landing Page' },
+            { name: 'CB Brazil GDF' },
+          ],
         },
-        custom_fields_values: custom_fields_values,
-        tags: [{ name: 'Lead API' }],
-      };
-
-      const payload: KommoLeadPayload[] = [leadPayload];
+      ];
 
       const response = await firstValueFrom(
         this.httpService.post<KommoLeadResponse>(
@@ -281,17 +238,48 @@ export class KommoService {
         );
       }
 
+      // Retorna um objeto com o leadId para facilitar o uso
       return { leadId };
     } catch (error) {
       console.error(
         'Erro ao criar lead no Kommo:',
         error.response?.data || error.message,
       );
-
       throw new HttpException(
         'Failed to create lead in Kommo',
         HttpStatus.BAD_REQUEST,
       );
+    }
+  }
+
+  /**
+   * Adiciona nota a uma entidade do Kommo
+   */
+  async addNote(
+    entity: 'leads' | 'contacts' | 'companies',
+    entityId: number,
+    text: string,
+  ) {
+    const url = `${this.apiUrl}/api/v4/${entity}/notes`;
+    const body = [
+      {
+        entity_id: entityId,
+        note_type: 'common',
+        params: { text },
+      },
+    ];
+
+    try {
+      const response = await this.httpService.axiosRef.post(url, body, {
+        headers: {
+          Authorization: `Bearer ${process.env.KOMMO_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao adicionar nota no ${entity} ${entityId}:`, error);
+      throw error;
     }
   }
 }
