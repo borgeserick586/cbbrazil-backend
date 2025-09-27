@@ -67,7 +67,7 @@ async function bootstrap() {
 
   const appUrl =
     env === 'production'
-      ? 'https://cdbrazilbackend-production-3ed4.up.railway.app'
+      ? 'https://api.cbbrazil.com.br'
       : `http://localhost:${port}`;
 
   console.log(`🚀 Backend rodando na porta ${port}`);
